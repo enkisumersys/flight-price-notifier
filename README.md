@@ -62,3 +62,13 @@ cd <repository-name>
 npm i
 npm run dev
 ```
+
+## Deploying to Vercel
+
+This is a plain Vite + React single-page app with client-side routing (React Router), so it deploys as a static site:
+
+- `npm run build` (`vite build`) writes the static site to `dist/`.
+- `vercel.json` rewrites every path to `index.html`, so deep links such as `/app` load the app and React Router takes over.
+- Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in the Vercel project's environment variables (or keep them in `.env`). They are read at build time.
+
+Routes: `/` (landing), `/signin`, `/signup`, `/app` (signed-in users only; others are sent to `/signin`).

@@ -1,28 +1,21 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { Logo, btnGhost } from "@/components/ui-kit";
+import { useAuthUser } from "@/components/RequireAuth";
+import { usePageMeta } from "@/lib/use-page-meta";
 
-export const Route = createFileRoute("/_authenticated/app")({
-  head: () => ({
-    meta: [
-      { title: "Dashboard — Flight Price Notifier" },
-      { name: "description", content: "Your Flight Price Notifier dashboard." },
-      { property: "og:title", content: "Dashboard — Flight Price Notifier" },
-      { property: "og:description", content: "Your Flight Price Notifier dashboard." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "robots", content: "noindex" },
-    ],
-  }),
-  component: AppPage,
-});
-
-function AppPage() {
-  const { user } = Route.useRouteContext();
+export default function AppPage() {
+  usePageMeta({
+    title: "Dashboard — Flight Price Notifier",
+    description: "Your Flight Price Notifier dashboard.",
+    noindex: true,
+  });
+  const user = useAuthUser();
   const navigate = useNavigate();
   async function signOut() {
+    // Leave the protected page first so the auth guard doesn't bounce to /signin on SIGNED_OUT.
+    navigate("/");
     await supabase.auth.signOut();
-    navigate({ to: "/" });
   }
   return (
     <div className="min-h-screen bg-hero">

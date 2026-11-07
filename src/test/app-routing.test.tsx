@@ -1,17 +1,47 @@
-import { QueryClient } from "@tanstack/react-query";
-import { createRouter, rootRouteId } from "@tanstack/react-router";
-import { describe, expect, it } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
+import { describe, expect, it, vi } from "vitest";
 
-import { routeTree } from "@/routeTree.gen";
+import { App } from "@/App";
 
-// Match routes without running loaders or rendering: loaders may need a server or
-// network the test run lacks, and jsdom never loads the stylesheets React waits on.
+// The landing and not-found pages never touch Supabase, but stub the client so
+// the test run needs no network or environment variables.
+vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));
+
+class IntersectionObserverStub {
+  observe() {}
+  disconnect() {}
+  unobserve() {}
+}
+vi.stubGlobal("IntersectionObserver", IntersectionObserverStub);
+
+function renderAt(path: string) {
+  return render(
+    <MemoryRouter initialEntries={[path]}>
+      <App />
+    </MemoryRouter>,
+  );
+}
+
 describe("App routing", () => {
-  it("matches a page for / instead of falling back to not found", () => {
-    const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
+  it("renders the landing page for / instead of falling back to not found", () => {
+    renderAt("/");
+    expect(screen.getByText("設定航線與目標價，機票降價就通知你")).toBeInTheDocument();
+    expect(screen.queryByText("Page not found")).not.toBeInTheDocument();
+  });
 
-    const matches = router.matchRoutes("/");
+  it("renders the sign-in page", () => {
+    renderAt("/signin");
+    expect(screen.getByRole("heading", { name: "Sign in / 登入" })).toBeInTheDocument();
+  });
 
-    expect(matches.at(-1)?.routeId).not.toBe(rootRouteId);
+  it("renders the sign-up page", () => {
+    renderAt("/signup");
+    expect(screen.getByRole("heading", { name: "Sign up / 註冊" })).toBeInTheDocument();
+  });
+
+  it("shows not found for unknown paths", () => {
+    renderAt("/does-not-exist");
+    expect(screen.getByText("Page not found")).toBeInTheDocument();
   });
 });
